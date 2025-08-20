@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FactCheck AI - Verify Claims Instantly</title>
+    <meta name="description" content="AI-powered fact-checking tool to verify claims and statements instantly">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        /* Custom CSS for premium aesthetic */
+        :root {
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --accent: #06b6d4;
+            --accent-light: #67e8f9;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-light: #64748b;
+            --surface: #0f172a;
+            --surface-light: rgba(15, 23, 42, 0.8);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+        
+        .glass {
+            background: var(--surface-light);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card {
+            background: linear-gradient(145deg, #1e293b, #334155);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(6, 182, 212, 0.1);
+            color: #e2e8f0;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            color: var(--primary);
+            border: none;
+            border-radius: 16px;
+            padding: 18px 36px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 32px rgba(6, 182, 212, 0.3);
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 16px 48px rgba(6, 182, 212, 0.4);
+            background: linear-gradient(135deg, var(--accent-light), #22d3ee);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .badge-true { 
+            background: linear-gradient(135deg, var(--success), #34d399); 
+            color: white; 
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .badge-false { 
+            background: linear-gradient(135deg, var(--danger), #f87171); 
+            color: white; 
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        .badge-partial { 
+            background: linear-gradient(135deg, var(--warning), #fbbf24); 
+            color: var(--primary); 
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+        .badge-unverified { 
+            background: linear-gradient(135deg, var(--text-light), #94a3b8); 
+            color: white; 
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+        }
+        
+        .result-card {
+            animation: slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 4px solid var(--accent);
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: linear-gradient(90deg, var(--primary-light), var(--surface));
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+        }
+        
+        .loading {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(103, 232, 249, 0.1));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            margin: 0 auto 20px;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-icon:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.2);
+        }
+        
+        textarea, input {
+            background: linear-gradient(145deg, #334155, #475569);
+            border: 2px solid rgba(6, 182, 212, 0.2);
+            color: #e2e8f0;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        textarea::placeholder, input::placeholder {
+            color: #94a3b8;
+        }
+        
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.2);
+            background: linear-gradient(145deg, #475569, #64748b);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="glass text-white py-6 mb-8">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex items-center justify-center space-x-3">
+                <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <i data-lucide="shield-check" class="w-7 h-7"></i>
+                </div>
+                <h1 class="text-3xl font-bold">FactCheck AI</h1>
+            </div>
+            <p class="text-center text-white text-opacity-90 mt-2 text-lg">
+                Verify claims instantly with AI-powered analysis
+            </p>
+        </div>
+    </header>
+
+    <div class="max-w-4xl mx-auto px-4 space-y-8">
+        <!-- Main Fact Checker Card -->
+        <div class="card p-8">
+            <div class="flex items-center space-x-3 mb-6">
+                <i data-lucide="search" class="w-6 h-6" style="color: var(--accent);"></i>
+                <h2 class="text-2xl font-bold" style="color: #e2e8f0;">Fact Check Your Claim</h2>
+            </div>
+            
+            <div class="space-y-6">
+                <textarea 
+                    id="claimInput"
+                    placeholder="Enter a statement, news article, or claim you'd like to fact-check..."
+                    class="w-full h-32 p-4 resize-none leading-relaxed"
+                ></textarea>
+                
+                <button 
+                    id="checkBtn"
+                    class="btn-primary w-full flex items-center justify-center space-x-2"
+                    onclick="factCheck()"
+                >
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                    <span>Fact Check</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Card -->
+        <div id="resultCard" class="card p-8 result-card hidden">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center space-x-3">
+                    <i id="resultIcon" class="w-6 h-6"></i>
+                    <h3 class="text-xl font-bold" style="color: #e2e8f0;">Fact-Check Result</h3>
+                </div>
+                <span id="resultBadge" class="badge"></span>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="p-4 rounded-lg" style="background: linear-gradient(145deg, rgba(6, 182, 212, 0.1), rgba(103, 232, 249, 0.05)); border: 1px solid rgba(6, 182, 212, 0.2);">
+                    <p id="resultExplanation" class="leading-relaxed" style="color: #e2e8f0;"></p>
+                </div>
+                
+                <div class="flex items-center justify-between text-sm" style="color: #94a3b8;">
+                    <span>Confidence Level</span>
+                    <span id="confidenceText" class="font-semibold" style="color: var(--accent);"></span>
+                </div>
+                
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="grid md:grid-cols-3 gap-6 mt-16">
+            <div class="card p-6 text-center">
+                <div class="feature-icon">
+                    <i data-lucide="brain" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-bold mb-2" style="color: #e2e8f0;">AI-Powered</h3>
+                <p class="text-sm" style="color: #94a3b8;">Advanced AI analyzes claims using multiple data sources</p>
+            </div>
+            
+            <div class="card p-6 text-center">
+                <div class="feature-icon">
+                    <i data-lucide="zap" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-bold mb-2" style="color: #e2e8f0;">Instant Results</h3>
+                <p class="text-sm" style="color: #94a3b8;">Get detailed fact-check results in seconds</p>
+            </div>
+            
+            <div class="card p-6 text-center">
+                <div class="feature-icon">
+                    <i data-lucide="shield" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-bold mb-2" style="color: #e2e8f0;">Reliable Sources</h3>
+                <p class="text-sm" style="color: #94a3b8;">Only credible, authoritative sources are used</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-8 mt-16">
+        <p class="text-white text-opacity-70">
+            © 2024 FactCheck AI. Empowering truth through technology.
+        </p>
+    </footer>
+
+<script>
+  // Initialize Lucide icons (keeps using the lucide script you already included)
+  lucide.createIcons();
+
+  let isChecking = false;
+
+  async function factCheck() {
+    const claimInput = document.getElementById('claimInput');
+    const checkBtn = document.getElementById('checkBtn');
+    const resultCard = document.getElementById('resultCard');
+
+    const claim = claimInput.value.trim();
+    if (!claim) {
+      alert('Please enter a claim to fact-check.');
+      return;
+    }
+    if (isChecking) return;
+
+    isChecking = true;
+    // Save original button HTML to restore later
+    const originalBtnHTML = checkBtn.innerHTML;
+    checkBtn.disabled = true;
+    checkBtn.innerHTML = `
+      <div class="loading w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
+      <span>Analyzing...</span>
+    `;
+
+    // Hide previous results
+    resultCard.classList.add('hidden');
+
+    try {
+      const resp = await fetch("http://localhost:8000/fact-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ claim })
+      });
+
+      const result = await resp.json();
+
+      if (result.error) throw new Error(result.error);
+
+      const explanation = result.explanation || result.text || JSON.stringify(result);
+
+      // Put full AI explanation into your result box
+      document.getElementById('resultExplanation').textContent = explanation;
+
+      // Decide verdict config
+      const config = {
+        'true': {
+          icon: 'check-circle',
+          badge: 'True',
+          badgeClass: 'badge-true',
+          iconClass: 'text-green-600'
+        },
+        'false': {
+          icon: 'x-circle',
+          badge: 'False',
+          badgeClass: 'badge-false',
+          iconClass: 'text-red-600'
+        },
+        'partial': {
+          icon: 'alert-triangle',
+          badge: 'Partially True',
+          badgeClass: 'badge-partial',
+          iconClass: 'text-orange-600'
+        },
+        'unverified': {
+          icon: 'help-circle',
+          badge: 'Unverified',
+          badgeClass: 'badge-unverified',
+          iconClass: 'text-gray-600'
+        }
+      };
+
+      // Prefer explicit verdict from backend; otherwise guess from explanation text
+      let verdictKey = null;
+      if (result.verdict && config[result.verdict]) verdictKey = result.verdict;
+      else {
+        const lower = explanation.toLowerCase();
+        if (lower.includes('false') || lower.includes('fake')) verdictKey = 'false';
+        else if (lower.includes('partial') || lower.includes('misleading')) verdictKey = 'partial';
+        else if (lower.includes('true') || lower.includes('real')) verdictKey = 'true';
+        else verdictKey = 'unverified';
+      }
+
+      const verdictConfig = config[verdictKey];
+
+      // Update icon & badge (these elements exist in your HTML)
+      const resultIcon = document.getElementById('resultIcon');
+      const resultBadge = document.getElementById('resultBadge');
+
+      resultIcon.setAttribute('data-lucide', verdictConfig.icon);
+      resultIcon.className = `w-6 h-6 ${verdictConfig.iconClass}`;
+      resultBadge.textContent = verdictConfig.badge;
+      resultBadge.className = `badge ${verdictConfig.badgeClass}`;
+
+      // Confidence handling: use backend confidence if provided
+      const confidenceEl = document.getElementById('confidenceText');
+      const progressFill = document.getElementById('progressFill');
+
+      if (typeof result.confidence === 'number') {
+        const c = Math.max(0, Math.min(100, Math.round(result.confidence)));
+        confidenceEl.textContent = `${c}%`;
+        // animate the bar
+        setTimeout(() => { progressFill.style.width = `${c}%`; }, 100);
+      } else {
+        // fallback: full bar & dash text
+        confidenceEl.textContent = '—';
+        setTimeout(() => { progressFill.style.width = `100%`; }, 100);
+      }
+
+      // show result card and recreate lucide icons
+      resultCard.classList.remove('hidden');
+      lucide.createIcons();
+
+    } catch (err) {
+      console.error('Fact-check error:', err);
+      alert('Fact-check failed — open console (F12) to see details.');
+    } finally {
+      isChecking = false;
+      checkBtn.disabled = false;
+      checkBtn.innerHTML = originalBtnHTML;
+      lucide.createIcons();
+    }
+  }
+
+  // Optional: Ctrl+Enter to submit (like you had earlier)
+  document.getElementById('claimInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      factCheck();
+    }
+  });
+</script>
+
+
+</body>
+</html>
